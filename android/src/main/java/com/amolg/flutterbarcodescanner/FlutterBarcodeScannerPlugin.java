@@ -48,6 +48,7 @@ public class FlutterBarcodeScannerPlugin implements MethodCallHandler, ActivityR
     public static String lineColor = "";
     public static boolean isShowFlashIcon = false;
     public static boolean isContinuousScan = false;
+    public static boolean is2d = false;
     static EventChannel.EventSink barcodeStream;
     private EventChannel eventChannel;
 
@@ -100,6 +101,7 @@ public class FlutterBarcodeScannerPlugin implements MethodCallHandler, ActivityR
                 arguments = (Map<String, Object>) call.arguments;
                 lineColor = (String) arguments.get("lineColor");
                 isShowFlashIcon = (boolean) arguments.get("isShowFlashIcon");
+                is2d = (boolean) arguments.get("is2d");
                 if (null == lineColor || lineColor.equalsIgnoreCase("")) {
                     lineColor = "#DC143C";
                 }
@@ -124,7 +126,7 @@ public class FlutterBarcodeScannerPlugin implements MethodCallHandler, ActivityR
 
     private void startBarcodeScannerActivityView(String buttonText, boolean isContinuousScan) {
         try {
-            Intent intent = new Intent(activity, BarcodeCaptureActivity.class).putExtra("cancelButtonText", buttonText);
+            Intent intent = new Intent(activity, BarcodeCaptureActivity.class).putExtra("cancelButtonText", buttonText).putExtra("is2d", is2d);
             if (isContinuousScan) {
                 activity.startActivity(intent);
             } else {
@@ -198,7 +200,7 @@ public class FlutterBarcodeScannerPlugin implements MethodCallHandler, ActivityR
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        barcodeStream.success(barcode.rawValue);
+                        barcodeStream.success(barcode.rawValue);//Edited here
                     }
                 });
             }

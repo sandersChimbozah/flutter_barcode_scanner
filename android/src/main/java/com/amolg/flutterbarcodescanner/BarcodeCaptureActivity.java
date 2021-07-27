@@ -84,6 +84,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     private ImageView imgViewBarcodeCaptureUseFlash;
     private ImageView imgViewSwitchCamera;
+    private boolean is2d;
 
     public static int SCAN_MODE = SCAN_MODE_ENUM.QR.ordinal();
 
@@ -100,6 +101,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
     private int flashStatus = USE_FLASH.OFF.ordinal();
 
+
+
     /**
      * Initializes the UI and creates the detector pipeline.
      */
@@ -111,6 +114,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
             String buttonText = "";
             try {
+                is2d = (boolean) getIntent().getBooleanExtra("is2d", false);
                     buttonText = (String) getIntent().getStringExtra("cancelButtonText");
         } catch (Exception e) {
             buttonText = "Cancel";
@@ -207,7 +211,12 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // is set to receive the barcode detection results, track the barcodes, and maintain
         // graphics for each barcode on screen.  The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
+        BarcodeDetector barcodeDetector;
+        if (is2d) {
+            barcodeDetector = new BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.PDF417).build();
+        } else {
+            barcodeDetector = new BarcodeDetector.Builder(context).build();
+        }
         BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
         barcodeDetector.setProcessor(
                 new MultiProcessor.Builder<>(barcodeFactory).build());
