@@ -18,6 +18,7 @@ public class SwiftFlutterBarcodeScannerPlugin: NSObject, FlutterPlugin, ScanBarc
     public static var lineColor:String=""
     public static var cancelButtonText:String=""
     public static var isShowFlashIcon:Bool=false
+    public static var is2d:Bool=false
     var pendingResult:FlutterResult!
     public static var isContinuousScan:Bool=false
     static var barcodeStream:FlutterEventSink?=nil
@@ -74,7 +75,11 @@ public class SwiftFlutterBarcodeScannerPlugin: NSObject, FlutterPlugin, ScanBarc
         }
         if let isContinuousScan = args["isContinuousScan"] as? Bool{
             SwiftFlutterBarcodeScannerPlugin.isContinuousScan = isContinuousScan
-        }else {
+        }
+        if let is2d = args["is2d"] as? Bool {
+            SwiftFlutterBarcodeScannerPlugin.is2d = is2d
+        }
+        else {
             SwiftFlutterBarcodeScannerPlugin.isContinuousScan = false
         }
         
@@ -280,7 +285,12 @@ class BarcodeScannerViewController: UIViewController {
             }
             // Set delegate and use the default dispatch queue to execute the call back
             captureMetadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            captureMetadataOutput.metadataObjectTypes = supportedCodeTypes
+            if (SwiftFlutterBarcodeScannerPlugin.is2d) {
+                captureMetadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.pdf417]
+            } else {
+                captureMetadataOutput.metadataObjectTypes = supportedCodeTypes
+            }
+            
             //            captureMetadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
             
         } catch {
