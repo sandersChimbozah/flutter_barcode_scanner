@@ -82,7 +82,7 @@ class _MyAppState extends State<MyApp> {
                   // ElevatedButton(onPressed: () => startBarcodeScanStream(), child: Text('Start barcode scan stream')),
                   ElevatedButton(
                     onPressed: () async {
-                      var code = await FlutterBarcodeScanner.scanBarcode(is2d: false);
+                      var code = await FlutterBarcodeScanner.scanBarcode(is2d: false, showFlashIcon: true);
                       print(code);
                     },
                     child: Text('All'),
@@ -90,7 +90,7 @@ class _MyAppState extends State<MyApp> {
 
                   ElevatedButton(
                     onPressed: () async {
-                      var code = await FlutterBarcodeScanner.scanBarcode(is2d: true);
+                      var code = await FlutterBarcodeScanner.scanBarcode(is2d: true, showFlashIcon: true);
                       print(code);
                     },
                     child: Text('2d Barcode'),

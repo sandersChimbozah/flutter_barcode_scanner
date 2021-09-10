@@ -1,6 +1,10 @@
 import Flutter
 import UIKit
 import AVFoundation
+import MLKitBarcodeScanning
+import MLImage
+import MLKitVision
+import MLKitCommon
 
 enum ScanMode:Int{
     case QR
@@ -178,6 +182,8 @@ class BarcodeScannerViewController: UIViewController {
     var screenHeight:CGFloat = 0
     let captureMetadataOutput = AVCaptureMetadataOutput()
     
+    let barcodeOptions = BarcodeScannerOptions(formats: SwiftFlutterBarcodeScannerPlugin.is2d ? .PDF417 : .all)
+    
     private lazy var xCor: CGFloat! = {
         return self.isOrientationPortrait ? (screenSize.width - (screenSize.width*0.8))/2 :
             (screenSize.width - (screenSize.width*0.6))/2
@@ -270,27 +276,38 @@ class BarcodeScannerViewController: UIViewController {
         do {
             // Get an instance of the AVCaptureDeviceInput class using the previous device object.
             let input = try AVCaptureDeviceInput(device: captureDevice)
+            captureSession.sessionPreset = .hd1280x720
             
             // Set the input device on the capture session.
             if captureSession.inputs.isEmpty {
                 captureSession.addInput(input)
             }
+            
+            let captureOutput = AVCaptureVideoDataOutput()
+            // TODO: Set video sample rate
+            captureOutput.videoSettings =
+              [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
+            captureOutput.setSampleBufferDelegate(
+              self,
+              queue: DispatchQueue.global(qos: DispatchQoS.QoSClass.default))
+
+            captureSession.addOutput(captureOutput)
             // Initialize a AVCaptureMetadataOutput object and set it as the output device to the capture session.
             
-            let captureRectWidth = self.isOrientationPortrait ? (screenSize.width*0.8):(screenSize.height*0.8)
-            
-            captureMetadataOutput.rectOfInterest = CGRect(x: xCor, y: yCor, width: captureRectWidth, height: screenHeight)
-            if captureSession.outputs.isEmpty {
-                captureSession.addOutput(captureMetadataOutput)
-            }
-            // Set delegate and use the default dispatch queue to execute the call back
-            captureMetadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            if (SwiftFlutterBarcodeScannerPlugin.is2d) {
-                captureMetadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.pdf417]
-            } else {
-                captureMetadataOutput.metadataObjectTypes = supportedCodeTypes
-            }
-            
+//            let captureRectWidth = self.isOrientationPortrait ? (screenSize.width*0.8):(screenSize.height*0.8)
+//
+//            captureMetadataOutput.rectOfInterest = CGRect(x: xCor, y: yCor, width: captureRectWidth, height: screenHeight)
+//            if captureSession.outputs.isEmpty {
+//                captureSession.addOutput(captureMetadataOutput)
+//            }
+//            // Set delegate and use the default dispatch queue to execute the call back
+//            captureMetadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+//            if (SwiftFlutterBarcodeScannerPlugin.is2d) {
+//                captureMetadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.pdf417]
+//            } else {
+//                captureMetadataOutput.metadataObjectTypes = supportedCodeTypes
+//            }
+//
             //            captureMetadataOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.qr]
             
         } catch {
@@ -578,6 +595,74 @@ class BarcodeScannerViewController: UIViewController {
                 self.delegate?.userDidScanWith(barcode: decodedURL)
             })
         }
+    }
+}
+
+extension BarcodeScannerViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
+  func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    // TODO: Live Vision
+    // 1
+//    guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+//      return
+//    }
+    
+    func imageOrientation(
+      deviceOrientation: UIDeviceOrientation,
+      cameraPosition: AVCaptureDevice.Position
+    ) -> UIImage.Orientation {
+      switch deviceOrientation {
+      case .portrait:
+        return cameraPosition == .front ? .leftMirrored : .right
+      case .landscapeLeft:
+        return cameraPosition == .front ? .downMirrored : .up
+      case .portraitUpsideDown:
+        return cameraPosition == .front ? .rightMirrored : .left
+      case .landscapeRight:
+        return cameraPosition == .front ? .upMirrored : .down
+      case .faceDown, .faceUp, .unknown:
+        return .up
+      @unknown default:
+          print("There was an issue")
+        return .up
+      }
+    
+    }
+    
+    let image = VisionImage(buffer: sampleBuffer)
+    image.orientation = imageOrientation(
+      deviceOrientation: UIDevice.current.orientation,
+        cameraPosition: AVCaptureDevice.Position.back)
+    
+    let barcodeScanner = BarcodeScanner.barcodeScanner(options: barcodeOptions)
+    
+    barcodeScanner.process(image) { features, error in
+      guard error == nil, let features = features, !features.isEmpty else {
+        // Error handling
+        return
+      }
+      // Recognized barcodes
+        
+        for barcode in features {
+
+//          let displayValue = barcode.displayValue
+          let rawValue = barcode.rawValue
+            
+            if(SwiftFlutterBarcodeScannerPlugin.isContinuousScan){
+                SwiftFlutterBarcodeScannerPlugin.onBarcodeScanReceiver(barcode: rawValue!)
+            }else{
+                self.launchApp(decodedURL: rawValue!)
+            }
+            
+        }
+    }
+
+  }
+    private func showAlert(withTitle title: String, message: String) {
+      DispatchQueue.main.async {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alertController.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(alertController, animated: true)
+      }
     }
 }
 

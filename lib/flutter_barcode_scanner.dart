@@ -24,7 +24,7 @@ class FlutterBarcodeScanner {
   static Future<String> scanBarcode({
     String? lineColor = '#ff6666',
     String? cancelButtonText = 'Cancel',
-    bool? isShowFlashIcon = false,
+    bool? showFlashIcon = false,
     ScanMode? scanMode = ScanMode.DEFAULT,
     bool? is2d = false,
   }) async {
@@ -32,7 +32,7 @@ class FlutterBarcodeScanner {
     Map params = <String, dynamic>{
       'lineColor': lineColor,
       'cancelButtonText': cancelButtonText,
-      'isShowFlashIcon': isShowFlashIcon,
+      'isShowFlashIcon': showFlashIcon,
       'isContinuousScan': false,
       'scanMode': scanMode!.index,
       'is2d': is2d,

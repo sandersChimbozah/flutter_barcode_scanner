@@ -16,7 +16,9 @@ A new Flutter plugin supports barcode scanning on both Android and iOS.
   s.public_header_files = 'Classes/**/*.h'
   s.resources = 'Assets/*.png'
   s.dependency 'Flutter'
+  s.dependency 'GoogleMLKit/BarcodeScanning', '2.3.0'
 
   s.ios.deployment_target = '12.0'
   s.swift_version = '5.0'
+  s.static_framework = true
 end
