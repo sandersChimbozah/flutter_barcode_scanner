@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -83,7 +84,7 @@ class _MyAppState extends State<MyApp> {
                   ElevatedButton(
                     onPressed: () async {
                       var code = await FlutterBarcodeScanner.scanBarcode(is2d: false, showFlashIcon: true);
-                      print(code);
+                      print('All barcodes: $code');
                     },
                     child: Text('All'),
                   ),
@@ -91,7 +92,7 @@ class _MyAppState extends State<MyApp> {
                   ElevatedButton(
                     onPressed: () async {
                       var code = await FlutterBarcodeScanner.scanBarcode(is2d: true, showFlashIcon: true);
-                      print(code);
+                      print('PDF 417 Code: $code');
                     },
                     child: Text('2d Barcode'),
                   ),
